@@ -388,7 +388,7 @@ if not SKIP_CUDA_BUILD:
     if bare_metal_version < Version("12.3"):
         raise RuntimeError("FlashAttention-3 is only supported on CUDA 12.3 and above")
 
-    if bare_metal_version != Version("12.8"):  # nvcc 12.8 gives the best perf currently
+    if not IS_WINDOWS and bare_metal_version != Version("12.8"):  # nvcc 12.8 gives the best perf currently
         download_and_copy(
             name="nvcc",
             # src_func=lambda system, arch, version: f"cuda_nvcc-{system}-{arch}-{version}-archive/bin/ptxas{exe_extension}",
