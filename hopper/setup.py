@@ -91,7 +91,9 @@ def _write_ninja_file(path,
                       objects,
                       ldflags,
                       library_target,
-                      with_cuda) -> None:
+                      with_cuda,
+                      **kwargs,  # kwargs (ignored) to absorb new flags in torch.utils.cpp_extension
+                      ) -> None:
     r"""Write a ninja file that does the desired compiling and linking.
 
     `path`: Where to write this file
@@ -387,6 +389,12 @@ if not SKIP_CUDA_BUILD:
     _, bare_metal_version = get_cuda_bare_metal_version(CUDA_HOME)
     if bare_metal_version < Version("12.3"):
         raise RuntimeError("FlashAttention-3 is only supported on CUDA 12.3 and above")
+    elif bare_metal_version >= Version("13.0"):
+        # CUDA 13.0+ uses system nvcc and CCCL headers are in /usr/local/cuda/include/cccl/
+        cccl_include = os.path.join(CUDA_HOME, "include", "cccl")
+        for env_var in ["CPLUS_INCLUDE_PATH", "C_INCLUDE_PATH"]:
+            current = os.environ.get(env_var, "")
+            os.environ[env_var] = cccl_include + (":" + current if current else "")
 
     if not IS_WINDOWS and bare_metal_version != Version("12.8"):  # nvcc 12.8 gives the best perf currently
         download_and_copy(
